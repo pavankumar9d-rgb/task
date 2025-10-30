@@ -1,0 +1,170 @@
+<style>
+        body {
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+            background: #1a1a1a;
+            color: #f2f2f2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #4dff88;
+            text-shadow: 2px 2px #000;
+        }
+        
+        .task-form {
+            background: #2b2b2b;
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px #4dff8850;
+        }
+        
+        .task-form input,
+        .task-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #1a1a1a;
+            color: #f2f2f2;
+            transition: 0.3s;
+            box-shadow: 0 0 0px #4dff8800;
+        }
+        
+        .task-form input:hover,
+        .task-form textarea:hover,
+        .task-form input:focus,
+        .task-form textarea:focus {
+            box-shadow: 0 0 10px #4dff88;
+            outline: none;
+        }
+        
+        .time-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+        
+        .time-container input {
+            flex: 1;
+        }
+        
+        .ampm-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #4dff88;
+            background: #1a1a1a;
+            color: #4dff88;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 0 0px #4dff8800;
+        }
+        
+        .ampm-btn:hover {
+            background: #4dff88;
+            color: #1a1a1a;
+            box-shadow: 0 0 10px #4dff88;
+        }
+        
+        .task-form button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #4dff88;
+            color: #1a1a1a;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 0 0px #4dff8800;
+        }
+        
+        .task-form button:hover {
+            background: #38e573;
+            box-shadow: 0 0 15px #4dff88;
+        }
+        
+        .tasks {
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .task {
+            background: #2b2b2b;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-left: 5px solid #4dff88;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #4dff8830;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task h3 {
+            margin: 0 0 5px 0;
+            color: #80ffb3;
+        }
+        
+        .task p {
+            margin: 2px 0;
+        }
+        
+        .delete-btn,
+        .edit-btn {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 5px;
+            transition: 0.3s;
+        }
+        
+        .delete-btn {
+            background: #ff4d4d;
+            color: #fff;
+        }
+        
+        .delete-btn:hover {
+            background: #ff1a1a;
+            box-shadow: 0 0 10px #ff4d4d;
+        }
+        
+        .edit-btn {
+            background: #4da6ff;
+            color: #fff;
+        }
+        
+        .edit-btn:hover {
+            background: #1a8cff;
+            box-shadow: 0 0 10px #4da6ff;
+        }
+        /* Enable Sound button style */
+        
+        #enableSoundBtn {
+            margin-bottom: 20px;
+            background: #4dff88;
+            color: #1a1a1a;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 0 10px #4dff88;
+        }
+        
+        #enableSoundBtn:hover {
+            background: #38e573;
+            box-shadow: 0 0 15px #4dff88;
+        }
+    </style>
