@@ -126,6 +126,7 @@
     }
     .top-bar-right { display: flex; align-items: center; gap: 10px; }
     .user-avatar { width: 32px; height: 32px; background: var(--accent); color: var(--bg); font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 5px; cursor: pointer; }
+    .badge-premium { background: linear-gradient(45deg, #ffcc00, #ff9900); padding: 5px 10px; border-radius: 5px; font-weight: bold; color: #111; cursor: pointer; font-size: 0.8rem; border: none; }
     .icon-btn { cursor: pointer; background: var(--card-bg); border: 1px solid #444; padding: 5px 10px; border-radius: 5px; color: var(--text); font-weight: bold; }
     .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
     .genre-badge { display: none; } /* hidden by default to keep clean UI */
@@ -295,12 +296,24 @@
     </div>
   </div>
 
+  <!-- ─────────────── PREMIUM POPUP ─────────────── -->
+  <div id="premiumModal" class="modal-overlay">
+    <div class="modal" style="text-align:center; border-color:#ffcc00; box-shadow:0 0 20px rgba(255,204,0,0.3);">
+      <div style="font-size:3rem;margin-bottom:10px;">⭐</div>
+      <h2 style="color:#ffcc00;">Upgrade to Premium</h2>
+      <p style="color:#ccc;margin-bottom:20px;">Unlock unlimited alarms, advanced progress tracking, and secure your productivity!</p>
+      <button class="btn btn-primary" style="background:#ffcc00; color:#111; font-weight:bold; margin-bottom:10px;" onclick="toast('Redirecting to Stripe checkout...'); document.getElementById('premiumModal').classList.remove('open');">Secure Checkout ($2.99/mo)</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('premiumModal').classList.remove('open')">Maybe Later</button>
+    </div>
+  </div>
+
   <!-- ─────────────── MAIN APP SCREEN ─────────────── -->
   <div id="appScreen" class="screen">
     <!-- TOP BAR -->
     <div class="top-bar">
       <div class="logo">Alarm<span>Pro</span></div>
       <div class="top-bar-right">
+        <button id="premiumBtn" class="badge-premium" onclick="showPremiumPopup()">⭐ Upgrade</button>
         <span class="genre-badge" id="genreBadgeTxt">Student</span>
         <div class="icon-btn" onclick="openSettings()" title="Settings">⚙️</div>
         <div class="user-avatar" id="userAvatar">U</div>
@@ -333,6 +346,9 @@
             </div>
           </div>
           <button class="btn btn-primary" id="addUpdateBtn" onclick="submitTask()">＋ Add Reminder</button>
+          <div id="premiumLockMsg" style="display:none; color:#ff4d4d; font-size:0.85rem; margin-top:10px; text-align:center;">
+             🔒 Free plan limit reached. <a href="#" onclick="showPremiumPopup(); return false;" style="color:var(--accent);">Upgrade to unlock</a>
+          </div>
           <button class="btn btn-ghost" id="cancelEditBtn" style="margin-top:8px;display:none;" onclick="cancelEdit()">✕ Cancel Edit</button>
         </div>
 
@@ -521,9 +537,8 @@
     window.saveGenreSelection = async () => {
       const genre = pendingGenre || 'student';
       if (user) {
-        await fetch(`${API}/auth/genre`, {
-          method: 'PUT', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ userId: user.id, genre })
+        await fetchAPI(`/auth/genre`, {
+          method: 'PUT', body: JSON.stringify({ userId: user.id, genre })
         });
         user.genre = genre;
         sessionStorage.setItem('alarmProUser', JSON.stringify(user));
@@ -552,9 +567,8 @@
       const genre = document.getElementById('settingsGenre').value;
       notifEnabled = document.getElementById('settingsNotif').value === 'on';
       if (genre !== user.genre) {
-        await fetch(`${API}/auth/genre`, {
-          method: 'PUT', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ userId: user.id, genre })
+        await fetchAPI(`/auth/genre`, {
+          method: 'PUT', body: JSON.stringify({ userId: user.id, genre })
         });
         user.genre = genre;
         sessionStorage.setItem('alarmProUser', JSON.stringify(user));
@@ -568,9 +582,24 @@
     function initApp() {
       const av = document.getElementById('userAvatar');
       if (av) av.textContent = user.username[0].toUpperCase();
+      
+      if (user.is_premium === 1 || user.isDemo === true) { // Demo mode allows all features mock
+        document.getElementById('premiumBtn').style.display = 'none';
+      } else {
+        document.getElementById('premiumBtn').style.display = 'inline-block';
+      }
+
       applyGenre(user.genre);
       fetchTasks();
       requestNotifPermission();
+    }
+
+    // Auto-fill demo if navigated from landing
+    if (sessionStorage.getItem('demoMode') === 'true') {
+      document.getElementById('loginUser').value = 'demo@alarmpro.com';
+      document.getElementById('loginPass').value = '123456';
+      sessionStorage.removeItem('demoMode');
+      toast('Demo credentials loaded!');
     }
 
     function requestNotifPermission() {
@@ -595,35 +624,70 @@
       }).catch(() => toast('⚠️ Tap again to enable sound'));
     };
 
+    // ─── API Wrapper ────────────────────────────────────
+    async function fetchAPI(endpoint, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...options.headers };
+      if (user && user.token) headers['Authorization'] = `Bearer ${user.token}`;
+      
+      const res = await fetch(`${API}${endpoint}`, { ...options, headers });
+      if (res.status === 401) { doLogout(); throw new Error('Unauthorized'); }
+      if (res.status === 403) {
+        const data = await res.json().catch(()=>({}));
+        if (data.error === 'FREE_LIMIT_REACHED') {
+          showPremiumPopup();
+          throw new Error('LIMIT');
+        }
+        toast('⚠️ ' + (data.error || 'Access Denied'));
+        throw new Error('Forbidden');
+      }
+      return res;
+    }
+
+    window.showPremiumPopup = () => document.getElementById('premiumModal').classList.add('open');
+
     // ─── API Calls ──────────────────────────────────────
     async function fetchTasks() {
       try {
-        const res = await fetch(`${API}/tasks?userId=${user.id}`);
+        const res = await fetchAPI(`/tasks?userId=${user.id}`);
         tasks = await res.json();
+        
+        // Premium Limit enforcement on UI
+        const active = tasks.filter(t => !t.completedAt);
+        if (user.is_premium === 0 && active.length >= 3) {
+          document.getElementById('addUpdateBtn').disabled = true;
+          document.getElementById('addUpdateBtn').style.opacity = '0.5';
+          document.getElementById('premiumLockMsg').style.display = 'block';
+        } else {
+          document.getElementById('addUpdateBtn').disabled = false;
+          document.getElementById('addUpdateBtn').style.opacity = '1';
+          document.getElementById('premiumLockMsg').style.display = 'none';
+        }
+        
         renderAll();
-      } catch(e) {
-        toast('⚠️ Cannot reach server');
-      }
+      } catch(e) { }
     }
 
     async function saveTask(t) {
-      await fetch(`${API}/tasks`, {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ ...t, userId: user.id })
-      });
-      fetchTasks();
+      try {
+        await fetchAPI(`/tasks`, { method: 'POST', body: JSON.stringify({ ...t, userId: user.id }) });
+        fetchTasks();
+      } catch(e) {}
     }
 
     async function deleteTask(id) {
-      await fetch(`${API}/tasks/${id}?userId=${user.id}`, { method: 'DELETE' });
-      fetchTasks();
+      try {
+        await fetchAPI(`/tasks/${id}?userId=${user.id}`, { method: 'DELETE' });
+        fetchTasks();
+      } catch(e) {}
     }
 
     async function clearHistory() {
       if (!confirm('Clear all completed history?')) return;
-      await fetch(`${API}/tasks/history?userId=${user.id}`, { method: 'DELETE' });
-      fetchTasks();
-      toast('🗑 History cleared');
+      try {
+        await fetchAPI(`/tasks/history/all?userId=${user.id}`, { method: 'DELETE' });
+        fetchTasks();
+        toast('🗑 History cleared');
+      } catch(e) {}
     }
     window.clearHistory = clearHistory;
 
