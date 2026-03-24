@@ -388,7 +388,7 @@
   <script>
   (() => {
     'use strict';
-    const API = 'http://localhost:3000/api';
+    const API = window.location.origin + '/api';
 
     // ─── Genre Config ───────────────────────────────────
     const GENRES = {
@@ -433,10 +433,12 @@
     // ─── Toast ──────────────────────────────────────────
     function toast(msg, duration = 3000) {
       const el = document.getElementById('toastEl');
+      if (!el) return;
       el.textContent = msg;
       el.classList.add('show');
       setTimeout(() => el.classList.remove('show'), duration);
     }
+    window.toast = toast; // expose globally for inline onclick handlers
 
     // ─── Auth ───────────────────────────────────────────
     window.switchAuthTab = (tab) => {
@@ -594,14 +596,6 @@
       requestNotifPermission();
     }
 
-    // Auto-fill demo if navigated from landing
-    if (sessionStorage.getItem('demoMode') === 'true') {
-      document.getElementById('loginUser').value = 'demo@alarmpro.com';
-      document.getElementById('loginPass').value = '123456';
-      sessionStorage.removeItem('demoMode');
-      toast('Demo credentials loaded!');
-    }
-
     function requestNotifPermission() {
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
@@ -640,6 +634,11 @@
         toast('⚠️ ' + (data.error || 'Access Denied'));
         throw new Error('Forbidden');
       }
+      if (!res.ok) {
+        // Server error (e.g. 500) — throw so callers don't misparse error JSON as data
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server error ${res.status}`);
+      }
       return res;
     }
 
@@ -649,7 +648,9 @@
     async function fetchTasks() {
       try {
         const res = await fetchAPI(`/tasks?userId=${user.id}`);
-        tasks = await res.json();
+        const data = await res.json();
+        // Always ensure tasks is an array — never let an error object replace it
+        tasks = Array.isArray(data) ? data : [];
         
         // Premium Limit enforcement on UI
         const active = tasks.filter(t => !t.completedAt);
@@ -664,7 +665,11 @@
         }
         
         renderAll();
-      } catch(e) { }
+      } catch(e) {
+        // Keep tasks as a valid array on error so checkAlarms() never crashes
+        if (!Array.isArray(tasks)) tasks = [];
+        console.warn('fetchTasks error:', e.message);
+      }
     }
 
     async function saveTask(t) {
@@ -824,7 +829,7 @@
 
     // ─── Alarm Check (100ms Web Worker) ─────────────────
     function checkAlarms() {
-      if (!tasks || !user) return;
+      if (!Array.isArray(tasks) || !user) return;
       const nowMs = Date.now();
       tasks.forEach(t => {
         if (!t.triggered && !t.completedAt) {

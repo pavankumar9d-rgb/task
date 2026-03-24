@@ -3,85 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AlarmPro | The Marketplace Ready SaaS</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <title>AlarmPro | High-Precision Alarm SaaS</title>
+  <meta name="description" content="AlarmPro — never miss an alarm again. High-precision alarms that work even when browser tabs sleep. Built for students, fitness, and productivity.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/landing.css">
 </head>
 <body>
-  
+
+  <!-- NAVBAR -->
   <header class="navbar">
-    <div class="logo">Alarm<span>Pro</span></div>
-    <div class="nav-links">
+    <div class="logo">AlarmPro</div>
+    <nav class="nav-links">
       <a href="/app" class="btn btn-outline" onclick="sessionStorage.clear()">Login</a>
-      <a href="/app" class="btn btn-glow">Get Started Free</a>
-    </div>
+      <a href="/app" class="btn btn-glow">Upgrade to Premium</a>
+    </nav>
   </header>
 
+  <!-- HERO -->
   <main class="hero">
-    <h1>Never Miss a Task <span>Even When Your Browser Sleeps</span></h1>
-    <p>The only High-Precision, progressive web alarm that uses advanced Web Workers to ensure your alarms ring perfectly on time, every time.</p>
+    <h1>Never Miss an Alarm Again<br><span>— Even When Tabs Sleep</span></h1>
+    <p>High-precision alarm system built for students, fitness, and productivity.</p>
     <div class="cta-group">
-      <button class="btn btn-glow lg" onclick="window.location.href='/app'; sessionStorage.setItem('demoMode', 'true');">
-        🔥 Try Live Demo
-      </button>
-      <span class="subtext">No credit card required. Demo mode available.</span>
-    </div>
-
-    <div class="hero-image">
-      <img src="assets/dashboard.png" alt="AlarmPro Dashboard UI">
+      <a href="/app" class="btn btn-outline lg" onclick="sessionStorage.setItem('demoMode', 'true');">Try Demo</a>
+      <a href="/app" class="btn btn-glow lg">Upgrade to Premium</a>
     </div>
   </main>
 
+  <!-- FEATURES -->
   <section class="features">
-    <h2>Why AlarmPro Wins</h2>
+    <div class="section-header">
+      <h2>Everything You Need to Stay on Time</h2>
+      <p>Built on reliable browser technology so your alarms fire every time — no exceptions.</p>
+    </div>
     <div class="feature-grid">
       <div class="card">
         <div class="icon">⚡</div>
-        <h3>Zero-Delay Alarms</h3>
-        <p>Bypasses generic DOM throttling using dedicated background Native Workers.</p>
+        <h3>Reliable Alarms</h3>
+        <p>Web Workers ensure millisecond precision even when your browser tabs go inactive or the screen is off.</p>
       </div>
       <div class="card">
         <div class="icon">🔔</div>
-        <h3>Instant Push Sync</h3>
-        <p>Stop alarms from your desktop notifications without searching for the app tab.</p>
+        <h3>Push Notification Stop</h3>
+        <p>Dismiss ringing alarms instantly via interactive desktop notifications — no tab switching needed.</p>
       </div>
       <div class="card">
         <div class="icon">🎨</div>
-        <h3>Multi-Tenant Themes</h3>
-        <p>Dynamic #1a1a1a dark mode built with neon accents specialized for Student, Gym, and Examiner tracks.</p>
+        <h3>Multi-Theme UI</h3>
+        <p>Choose from beautiful dark-mode interfaces tailored to your workflow: Study, Focus, Fitness, and more.</p>
+      </div>
+      <div class="card">
+        <div class="icon">📲</div>
+        <h3>PWA Install</h3>
+        <p>Install directly onto iOS, Android, or Windows for a fully offline, native-app experience.</p>
       </div>
     </div>
   </section>
 
+  <!-- SCREENSHOTS -->
+  <section class="screenshots">
+    <div class="section-header">
+      <h2>Platform Interface</h2>
+      <p>A clean, intuitive UI designed to get out of your way.</p>
+    </div>
+    <div class="shot-grid">
+      <figure class="shot-item">
+        <img src="assets/dashboard.png" alt="AlarmPro Dashboard — Create and manage alarms">
+        <figcaption>Dashboard — Create &amp; Manage Alarms</figcaption>
+      </figure>
+      <figure class="shot-item">
+        <img src="assets/settings.png" alt="AlarmPro Settings — Themes and notifications">
+        <figcaption>Settings — Theme &amp; Notifications</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- PRICING -->
   <section class="pricing">
-    <h2>Simple, Transparent Pricing</h2>
+    <div class="section-header">
+      <h2>Simple, Transparent Pricing</h2>
+      <p>Start for free. Upgrade when you need more.</p>
+    </div>
     <div class="pricing-grid">
-      <div class="card pricing-card">
+
+      <div class="pricing-card">
         <h3>Free Plan</h3>
         <div class="price">$0<span>/month</span></div>
         <ul>
-          <li>✔ Up to 3 Active Alarms</li>
-          <li>✔ Standard Dashboard</li>
-          <li>✖ Smart Push Sync</li>
-          <li>✖ Custom Niches</li>
+          <li>3 Active Alarms</li>
+          <li>Basic Dashboard Features</li>
+          <li>Web Push Notifications</li>
         </ul>
-        <a href="/app" class="btn btn-outline">Start Free</a>
+        <a href="/app" class="btn btn-outline" style="width:100%; text-align:center;">Start Free</a>
       </div>
-      <div class="card pricing-card premium">
-        <div class="badge">Most Popular</div>
+
+      <div class="pricing-card premium">
+        <div class="premium-badge">⭐ Most Popular</div>
         <h3>Premium Pro</h3>
         <div class="price">$2.99<span>/month</span></div>
         <ul>
-          <li>✔ Unlimited Active Alarms</li>
-          <li>✔ Advanced Progress Tracking</li>
-          <li>✔ Instant Push Notification Sync</li>
-          <li>✔ White-label Theme Niches</li>
+          <li>Unlimited Active Alarms</li>
+          <li>Instant Push Notifications</li>
+          <li>All Premium Themes</li>
+          <li>Priority Support</li>
         </ul>
-        <a href="/app" class="btn btn-glow">Upgrade Now</a>
+        <a href="/app" class="btn btn-glow" style="width:100%; text-align:center;">Upgrade Now</a>
       </div>
+
     </div>
   </section>
 
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <h2>Start Using AlarmPro Today</h2>
+    <p>No credit card required. Free forever.</p>
+    <a href="/app" class="btn btn-glow lg" onclick="sessionStorage.setItem('demoMode', 'true');">Try Live Demo</a>
+  </section>
+
+  <!-- FOOTER -->
   <footer>
     <p>&copy; 2026 AlarmPro SaaS Platform. All Rights Reserved.</p>
   </footer>

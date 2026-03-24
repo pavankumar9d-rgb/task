@@ -4,8 +4,8 @@ const taskController = require('../controllers/taskController');
 const { verifyToken, blockDemoWrites } = require('../middleware/authMiddleware');
 
 router.get('/', verifyToken, taskController.getTasks);
-router.post('/', verifyToken, blockDemoWrites, taskController.createTask);
-router.delete('/history/all', verifyToken, blockDemoWrites, taskController.clearHistory);
-router.delete('/:id', verifyToken, blockDemoWrites, taskController.deleteTask);
+router.post('/', verifyToken, taskController.createTask);
+router.delete('/history/all', verifyToken, taskController.clearHistory);
+router.delete('/:id', verifyToken, taskController.deleteTask);
 
 module.exports = router;
