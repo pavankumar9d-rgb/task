@@ -31,15 +31,59 @@ Whether deployed as an enterprise scheduler or packaged as a SaaS product for st
 ### The Sleek, Niche-Driven Interface
 Built with a relentless focus on aesthetics, applying strict Dark Mode boundaries (`#1a1a1a`) and dynamic neon LED accents.
 
-*(Screenshots will be visible if downloaded from the repository's assets)*
+> **Note to Maintainer**: Please place your freshly captured screenshots of the updated dark-mode UI into the `assets/` folder named `dashboard.png` and `settings.png` to have them appear below.
+
 <p align="center">
-  <img src="assets/main_app_screen_1774338832157.png" width="400" alt="AlarmPro Main Dashboard" />
-  <img src="assets/settings_modal_1774339086035.png" width="400" alt="AlarmPro Settings & Theming" />
+  <img src="assets/dashboard.png" width="45%" alt="AlarmPro Main Dashboard" />
+  <img src="assets/settings.png" width="45%" alt="AlarmPro Settings & Theming" />
 </p>
 
 ---
 
 ## 🛠 Tech Stack & Architecture
+
+```mermaid
+flowchart LR
+    subgraph Client ["CLIENT (BROWSER)"]
+        direction TB
+        subgraph MainThread ["Main UI Thread (Vanilla JS)"]
+            direction TB
+            UIR["UI Rendering (Native DOM)"]
+            TM["Theme Manager (CSS Variables)"]
+            AM["Alarm Manager"]
+            Audio["Audio Stream (Web Audio API)"]
+        end
+    end
+    
+    subgraph PWA ["PWA SERVICES"]
+        direction TB
+        subgraph SW ["SERVICE WORKER (sw.js)"]
+            CS["Caching Strategy (Network-First)"]
+            PN["Push Notification Handler"]
+            OS["Offline Sync Queue"]
+        end
+        
+        subgraph WW ["WEB WORKER (worker.js)"]
+            HP["High-Precision Heartbeat (0.001s Accuracy)"]
+        end
+    end
+
+    subgraph Backend ["BACKEND & PERSISTENCE"]
+        direction TB
+        subgraph Node ["Node.js REST API (Express)"]
+            JWT["JWT Auth Middleware"]
+            VAL["Validation Logic"]
+            CRUD["CRUD Controllers"]
+        end
+        DB[("SQLite3 DATABASE\n(Users, Alarms, Sync Log)")]
+    end
+    
+    %% Relationships
+    MainThread <-->|"Push Notification Event"| SW
+    SW <-->|"Secured HTTPS Requests"| Node
+    Node <--> DB
+    MainThread <-->|"PostMessage API"| WW
+```
 
 | Layer | Technology | Rationale |
 |---|---|---|
