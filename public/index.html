@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AlarmPro — Smart Reminder App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="./manifest.json">
+  <style>
+    /* ═══════════════ ORIGINAL THEME + DYNAMIC GENRES ═══════════════ */
+    :root {
+      --accent: #4dff88;
+      --accent-glow: #4dff8850;
+      /* Original colors from user */
+      --bg: #1a1a1a;
+      --card-bg: #2b2b2b;
+      --text: #f2f2f2;
+    }
+    /* Genre-specific accent colors */
+    body.student { --accent: #4dff88; --accent-glow: #4dff8850; }
+    body.gym     { --accent: #ff4d4d; --accent-glow: #ff4d4d50; }
+    body.exam    { --accent: #4da6ff; --accent-glow: #4da6ff50; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .logo, h2, .modal-title, .section-header h3 {
+      color: var(--accent);
+      text-shadow: 2px 2px #000;
+      margin-bottom: 10px;
+    }
+    .logo { font-size: 2rem; font-weight: bold; }
+    .logo span { color: var(--text); }
+    .sub { color: #ccc; margin-bottom: 20px; font-size: 0.9rem; }
+
+    .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
+    .screen.active { display: flex; }
+
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+    
+    .field { margin-bottom: 10px; width: 100%; }
+    .field label { display: block; font-weight: bold; margin-bottom: 6px; color: #ccc; font-size: 0.85rem; text-transform: uppercase;}
+    
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Montserrat', sans-serif;
+      transition: 0.3s;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      box-shadow: 0 0 10px var(--accent);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      font-family: 'Montserrat', sans-serif;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .btn:hover { box-shadow: 0 0 15px var(--accent); filter: brightness(1.1); }
+    
+    .btn-ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+    .btn-ghost:hover { background: var(--accent); color: var(--bg); }
+    
+    .btn-danger { background: #ff4d4d; color: #fff; }
+    .btn-danger:hover { background: #ff1a1a; box-shadow: 0 0 10px #ff4d4d; }
+    .btn-sm { width: auto; padding: 5px 10px; margin: 0; }
+
+    .auth-tabs, .nav-tabs { display: flex; gap: 10px; margin-bottom: 14px; justify-content: center; width: 100%; }
+    .auth-tab, .nav-tab {
+      padding: 8px 18px; border-radius: 30px; border: 1px solid var(--accent);
+      background: none; color: var(--accent); cursor: pointer; font-weight: bold; flex: 1; text-align: center;
+    }
+    .auth-tab.active, .nav-tab.active, .auth-tab:hover, .nav-tab:hover {
+      background: var(--accent); color: var(--bg); box-shadow: 0 0 10px var(--accent);
+    }
+
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+    .error-msg { background: #3d0000; color: #ff4d4d; padding: 10px; border-radius: 5px; margin-bottom: 10px; display: none; border: 1px solid #ff4d4d; }
+
+    .genre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .genre-tile {
+      background: var(--bg); padding: 15px; border-radius: 5px; text-align: center; cursor: pointer;
+      border: 1px solid #444; transition: 0.3s;
+    }
+    .genre-tile:hover { box-shadow: 0 0 10px var(--accent); border-color: var(--accent); }
+    .genre-tile.selected { border-width: 2px; border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+    .genre-tile .icon { font-size: 2rem; margin-bottom: 5px; }
+    .genre-tile .name { font-weight: bold; color: var(--text); margin-bottom: 5px; }
+    .genre-tile .desc { font-size: 0.75rem; color: #aaa; }
+
+    .top-bar {
+      width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+    }
+    .top-bar-right { display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 32px; height: 32px; background: var(--accent); color: var(--bg); font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 5px; cursor: pointer; }
+    .icon-btn { cursor: pointer; background: var(--card-bg); border: 1px solid #444; padding: 5px 10px; border-radius: 5px; color: var(--text); font-weight: bold; }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .genre-badge { display: none; } /* hidden by default to keep clean UI */
+
+    .app-body { width: 100%; max-width: 600px; flex: 1; display:flex; flex-direction: column; align-items: center; }
+    #todaySection, #historySection { width: 100%; }
+
+    .form-row { display: flex; gap: 10px; }
+    .time-group { display: flex; gap: 10px; align-items: flex-end; }
+    .time-group .field { flex: 2; margin-bottom: 0;}
+    .ampm-toggle {
+      flex: 1; padding: 10px; border-radius: 20px; border: 1px solid var(--accent); height: 39px;
+      background: var(--bg); color: var(--accent); font-weight: bold; cursor: pointer; transition: 0.3s;
+    }
+    .ampm-toggle:hover { background: var(--accent); color: var(--bg); box-shadow: 0 0 10px var(--accent); }
+
+    .section-header { margin: 15px 0 10px 0; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .section-header .count { color: #888; font-size: 0.85rem; font-weight: normal; }
+    .task-list { width: 100%; display: flex; flex-direction: column; gap: 15px; }
+    
+    .task-card {
+      background: var(--card-bg); padding: 15px; border-left: 5px solid var(--accent);
+      border-radius: 5px; box-shadow: 0 0 10px var(--accent-glow);
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    }
+    .task-card.completed { border-left-color: #888; opacity: 0.7; }
+    .task-title { font-weight: bold; color: var(--accent); margin-bottom: 5px; font-size: 1.1rem; }
+    .task-card.completed .task-title { color: #aaa; }
+    .task-desc { color: #ccc; font-size: 0.9rem; margin-bottom: 5px; }
+    .task-time, .task-category { font-weight: bold; font-size: 0.85rem; }
+    .task-time { color: var(--bg); background: var(--accent); padding: 2px 8px; border-radius: 12px; }
+    .task-actions { display: flex; gap: 5px; }
+    
+    .empty-state { text-align: center; color: #888; padding: 20px; }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+    #alarmBanner {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%); background: var(--accent);
+      color: var(--bg); padding: 10px 14px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      font-weight: bold; z-index: 9999; display: none;
+    }
+    #stopAlarmBtn {
+      background: #ff4d4d; color: #fff; width: 100%; max-width: 600px;
+      font-size: 1.1rem; padding: 14px 20px; box-shadow: 0 0 10px #ff4d4d;
+      border: none; border-radius: 5px; font-weight: bold; cursor: pointer;
+      display: none; margin-top: 15px; animation: pulse 2s infinite; font-family: 'Montserrat', sans-serif;
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;
+    }
+    @keyframes pulse { 0%{transform: translateX(-50%) scale(1);box-shadow:0 0 10px #ff4d4d;} 50%{transform: translateX(-50%) scale(1.02);box-shadow:0 0 20px #ff4d4d;} 100%{transform: translateX(-50%) scale(1);box-shadow:0 0 10px #ff4d4d;} }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px;}
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--card-bg); padding: 20px; border-radius: 10px; width: 100%; max-width: 400px; border: 1px solid var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+    .modal-close { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
+
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: var(--bg);
+      padding: 10px 20px; border-radius: 5px; font-weight: bold; z-index: 9999;
+      opacity: 0; transform: translateY(20px); transition: 0.3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    
+    .hist-search { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; }
+
+    @media (max-width: 600px) {
+      .genre-grid { grid-template-columns: 1fr; }
+      .form-row { flex-direction: column; gap: 0; }
+      .task-card { flex-direction: column; align-items: flex-start; }
+      .task-actions { width: 100%; display: flex; justify-content: flex-end; margin-top: 10px; }
+      .hist-search { flex-direction: column; gap: 0; }
+    }
+  </style>
+</head>
+<body class="student">
+
+  <!-- ───────────────── AUTH SCREEN ───────────────── -->
+  <div id="authScreen" class="screen active">
+    <div class="card">
+      <div style="text-align:center;margin-bottom:28px;">
+        <div class="logo">Alarm<span>Pro</span></div>
+        <p style="color:var(--muted);font-size:0.88rem;margin-top:6px;">Smart Reminders for Every Lifestyle</p>
+      </div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
+        <div class="auth-tab" onclick="switchAuthTab('register')">Register</div>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm" class="auth-form active">
+        <div id="loginError" class="error-msg"></div>
+        <div class="field"><label>Username</label><input id="loginUser" type="text" placeholder="Enter your username" autocomplete="username"></div>
+        <div class="field"><label>Password</label><input id="loginPass" type="password" placeholder="Enter your password" autocomplete="current-password"></div>
+        <button class="btn btn-primary" onclick="doLogin()">🔐 Login</button>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" class="auth-form">
+        <div id="registerError" class="error-msg"></div>
+        <div class="field"><label>Username</label><input id="regUser" type="text" placeholder="Choose a username" autocomplete="username"></div>
+        <div class="field"><label>Password</label><input id="regPass" type="password" placeholder="Choose a password" autocomplete="new-password"></div>
+        <div class="field">
+          <label>Your App Type</label>
+          <select id="regGenre">
+            <option value="student">📚 Student Study Reminder</option>
+            <option value="gym">💪 Gym Workout Alarm</option>
+            <option value="exam">📝 Exam Planner</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="doRegister()">🚀 Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────────────── GENRE SCREEN ───────────────── -->
+  <div id="genreScreen" class="screen">
+    <div class="card">
+      <h2>Choose Your App Type</h2>
+      <p class="sub">You can always change this later in Settings.</p>
+      <div class="genre-grid" id="genreGrid">
+        <div class="genre-tile selected" data-genre="student" onclick="selectGenreTile(this)">
+          <div class="icon">📚</div>
+          <div class="name">Student Study</div>
+          <div class="desc">Schedule sessions, assignments & revision blocks</div>
+        </div>
+        <div class="genre-tile" data-genre="gym" onclick="selectGenreTile(this)">
+          <div class="icon">💪</div>
+          <div class="name">Gym Workout</div>
+          <div class="desc">Workout schedule, rest days & cardio alarms</div>
+        </div>
+        <div class="genre-tile" data-genre="exam" onclick="selectGenreTile(this)">
+          <div class="icon">📝</div>
+          <div class="name">Exam Planner</div>
+          <div class="desc">Track exams, mock tests & revision plans</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveGenreSelection()">✓ Confirm & Continue</button>
+    </div>
+  </div>
+
+  <!-- ─────────────── SETTINGS MODAL ─────────────── -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-title">
+        ⚙️ Settings
+        <button class="modal-close" onclick="closeSettings()">✕</button>
+      </div>
+      <div class="field"><label>Your App Type</label>
+        <select id="settingsGenre" onchange="previewGenre(this.value)">
+          <option value="student">📚 Student Study Reminder</option>
+          <option value="gym">💪 Gym Workout Alarm</option>
+          <option value="exam">📝 Exam Planner</option>
+        </select>
+      </div>
+      <div class="field"><label>Notifications</label>
+        <select id="settingsNotif">
+          <option value="on">🔔 Enabled</option>
+          <option value="off">🔕 Disabled</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeSettings()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveSettings()">Save</button>
+      </div>
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+        <button class="btn btn-danger" onclick="doLogout()">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── MAIN APP SCREEN ─────────────── -->
+  <div id="appScreen" class="screen">
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="logo">Alarm<span>Pro</span></div>
+      <div class="top-bar-right">
+        <span class="genre-badge" id="genreBadgeTxt">Student</span>
+        <div class="icon-btn" onclick="openSettings()" title="Settings">⚙️</div>
+        <div class="user-avatar" id="userAvatar">U</div>
+      </div>
+    </div>
+
+    <div class="app-body">
+      <!-- NAV TABS -->
+      <div class="nav-tabs">
+        <div class="nav-tab active" id="todayTab" onclick="switchTab('today')">📅 Today</div>
+        <div class="nav-tab" id="historyTab" onclick="switchTab('history')">📜 History</div>
+      </div>
+
+      <!-- TODAY SECTION -->
+      <div id="todaySection">
+        <!-- Add Task Form -->
+        <div class="card form-section">
+          <h2 id="formTitle" style="font-size:1.1rem;margin-bottom:20px;">+ Add Reminder</h2>
+          <div class="field"><label>Title</label><input id="taskTitle" type="text" placeholder="e.g. Math Revision"></div>
+          <div class="field"><label>Description</label><textarea id="taskDesc" placeholder="More details..."></textarea></div>
+          <div class="form-row">
+            <div class="field"><label>Date</label><input id="taskDate" type="date"></div>
+            <div class="field"><label>Category</label><select id="taskCategory"></select></div>
+          </div>
+          <div class="field">
+            <label>Time</label>
+            <div class="time-group">
+              <div class="field"><input id="taskTime" type="time"></div>
+              <button class="ampm-toggle" id="ampmBtn">AM</button>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="addUpdateBtn" onclick="submitTask()">＋ Add Reminder</button>
+          <button class="btn btn-ghost" id="cancelEditBtn" style="margin-top:8px;display:none;" onclick="cancelEdit()">✕ Cancel Edit</button>
+        </div>
+
+        <!-- Enable Sound -->
+        <button class="btn btn-ghost" id="enableSoundBtn" style="margin-bottom:20px;border-color:var(--c1);color:var(--c1);" onclick="enableSound()">🔊 Enable Alarm Sound (required once)</button>
+
+        <!-- Task List -->
+        <div class="section-header">
+          <h3>Upcoming Reminders</h3>
+          <span class="count" id="taskCountLabel"></span>
+        </div>
+        <div class="task-list" id="taskList"></div>
+      </div>
+
+      <!-- HISTORY SECTION -->
+      <div id="historySection" style="display:none;">
+        <div class="hist-search form-section">
+          <input class="field" style="flex:1;padding:13px 16px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.06);color:var(--text);font-size:0.95rem;outline:none;" type="text" id="histSearch" placeholder="🔍 Search history..." oninput="renderHistory()">
+          <input class="field" style="padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.06);color:var(--text);font-size:0.95rem;outline:none;" type="date" id="histDate" oninput="renderHistory()">
+        </div>
+        <div class="section-header">
+          <h3>Completed</h3>
+          <button class="btn btn-sm btn-danger" onclick="clearHistory()">🗑 Clear All</button>
+        </div>
+        <div class="task-list" id="histList"></div>
+      </div>
+    </div><!-- /app-body -->
+  </div><!-- /appScreen -->
+
+  <!-- ALARM ELEMENTS -->
+  <div id="alarmBanner">⏰ Alarm Ringing!</div>
+  <button id="stopAlarmBtn" onclick="stopAlarm()">🔕 Stop Alarm</button>
+  <div id="toastEl" class="toast"></div>
+  <audio id="alarmAudio" src="mixkit-vintage-warning-alarm-990.wav" loop></audio>
+
+  <!-- ───────────── MAIN SCRIPT ───────────── -->
+  <script>
+  (() => {
+    'use strict';
+    const API = 'http://localhost:3000/api';
+
+    // ─── Genre Config ───────────────────────────────────
+    const GENRES = {
+      student: {
+        label: 'Student Study',
+        icon: '📚',
+        categories: ['Study Session', 'Assignment Due', 'Exam', 'Group Meeting', 'Lecture', 'Break'],
+        placeholder: 'e.g. Math Revision — Chapter 5',
+        formTitle: '+ Add Study Reminder'
+      },
+      gym: {
+        label: 'Gym / Workout',
+        icon: '💪',
+        categories: ['Workout', 'Cardio', 'Rest Day', 'Meal Prep', 'Stretch & Recovery', 'Supplement'],
+        placeholder: 'e.g. Chest & Triceps Day',
+        formTitle: '+ Add Workout Alarm'
+      },
+      exam: {
+        label: 'Exam Planner',
+        icon: '📝',
+        categories: ['Exam', 'Mock Test', 'Revision', 'Topic Complete', 'Past Paper', 'Study Break'],
+        placeholder: 'e.g. Physics Paper 2',
+        formTitle: '+ Add Exam Event'
+      }
+    };
+
+    // ─── State ──────────────────────────────────────────
+    let user = null;
+    let tasks = [];
+    let editingId = null;
+    let ampm = 'AM';
+    let ringingTaskId = null;
+    let soundEnabled = false;
+    let notifEnabled = true;
+
+    const pad2 = n => String(n).padStart(2, '0');
+    function nowStamp() {
+      const d = new Date();
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    // ─── Toast ──────────────────────────────────────────
+    function toast(msg, duration = 3000) {
+      const el = document.getElementById('toastEl');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), duration);
+    }
+
+    // ─── Auth ───────────────────────────────────────────
+    window.switchAuthTab = (tab) => {
+      document.querySelectorAll('.auth-tab').forEach((t, i) => {
+        t.classList.toggle('active', (i === 0) === (tab === 'login'));
+      });
+      document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+      document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+    };
+
+    window.doLogin = async () => {
+      const username = document.getElementById('loginUser').value.trim();
+      const password = document.getElementById('loginPass').value;
+      const errEl = document.getElementById('loginError');
+      errEl.style.display = 'none';
+      if (!username || !password) { showErr(errEl, 'Please fill all fields'); return; }
+      try {
+        const res = await fetch(`${API}/auth/login`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) { showErr(errEl, data.error); return; }
+        loginSuccess(data);
+      } catch(e) { showErr(errEl, 'Cannot connect to server. Is it running?'); }
+    };
+
+    window.doRegister = async () => {
+      const username = document.getElementById('regUser').value.trim();
+      const password = document.getElementById('regPass').value;
+      const genre = document.getElementById('regGenre').value;
+      const errEl = document.getElementById('registerError');
+      errEl.style.display = 'none';
+      if (!username || !password) { showErr(errEl, 'Please fill all fields'); return; }
+      if (password.length < 4) { showErr(errEl, 'Password must be at least 4 characters'); return; }
+      try {
+        const res = await fetch(`${API}/auth/register`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ username, password, genre })
+        });
+        const data = await res.json();
+        if (!res.ok) { showErr(errEl, data.error); return; }
+        loginSuccess(data);
+      } catch(e) { showErr(errEl, 'Cannot connect to server. Is it running?'); }
+    };
+
+    function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+
+    function loginSuccess(userData) {
+      user = userData;
+      sessionStorage.setItem('alarmProUser', JSON.stringify(user));
+      applyGenre(user.genre);
+      showScreen('appScreen');
+      initApp();
+    }
+
+    window.doLogout = () => {
+      sessionStorage.removeItem('alarmProUser');
+      user = null; tasks = [];
+      closeSettings();
+      applyGenre('student');
+      showScreen('authScreen');
+    };
+
+    // ─── Genre ──────────────────────────────────────────
+    function applyGenre(genre) {
+      document.body.className = genre;
+      const cfg = GENRES[genre];
+      if (!cfg) return;
+
+      // Update badge
+      const badge = document.getElementById('genreBadgeTxt');
+      if (badge) badge.textContent = cfg.icon + ' ' + cfg.label;
+
+      // Update category dropdown
+      const sel = document.getElementById('taskCategory');
+      if (sel) {
+        sel.innerHTML = cfg.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+
+      // Update form title and placeholder
+      const ft = document.getElementById('formTitle');
+      if (ft) ft.textContent = cfg.formTitle;
+      const tt = document.getElementById('taskTitle');
+      if (tt) tt.placeholder = cfg.placeholder;
+    }
+
+    window.previewGenre = (genre) => applyGenre(genre);
+
+    let pendingGenre = null;
+    window.selectGenreTile = (el) => {
+      document.querySelectorAll('.genre-tile').forEach(t => t.classList.remove('selected'));
+      el.classList.add('selected');
+      pendingGenre = el.dataset.genre;
+      applyGenre(pendingGenre);
+    };
+
+    window.saveGenreSelection = async () => {
+      const genre = pendingGenre || 'student';
+      if (user) {
+        await fetch(`${API}/auth/genre`, {
+          method: 'PUT', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ userId: user.id, genre })
+        });
+        user.genre = genre;
+        sessionStorage.setItem('alarmProUser', JSON.stringify(user));
+      }
+      applyGenre(genre);
+      showScreen('appScreen');
+      initApp();
+    };
+
+    // ─── Screen Router ──────────────────────────────────
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ─── Settings ───────────────────────────────────────
+    window.openSettings = () => {
+      if (!user) return;
+      document.getElementById('settingsGenre').value = user.genre;
+      document.getElementById('settingsNotif').value = notifEnabled ? 'on' : 'off';
+      document.getElementById('settingsModal').classList.add('open');
+    };
+    window.closeSettings = () => document.getElementById('settingsModal').classList.remove('open');
+
+    window.saveSettings = async () => {
+      const genre = document.getElementById('settingsGenre').value;
+      notifEnabled = document.getElementById('settingsNotif').value === 'on';
+      if (genre !== user.genre) {
+        await fetch(`${API}/auth/genre`, {
+          method: 'PUT', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ userId: user.id, genre })
+        });
+        user.genre = genre;
+        sessionStorage.setItem('alarmProUser', JSON.stringify(user));
+        applyGenre(genre);
+      }
+      closeSettings();
+      toast('✅ Settings saved!');
+    };
+
+    // ─── App Init ───────────────────────────────────────
+    function initApp() {
+      const av = document.getElementById('userAvatar');
+      if (av) av.textContent = user.username[0].toUpperCase();
+      applyGenre(user.genre);
+      fetchTasks();
+      requestNotifPermission();
+    }
+
+    function requestNotifPermission() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+
+    // ─── AM/PM Toggle ───────────────────────────────────
+    document.getElementById('ampmBtn').addEventListener('click', () => {
+      ampm = ampm === 'AM' ? 'PM' : 'AM';
+      document.getElementById('ampmBtn').textContent = ampm;
+    });
+
+    // ─── Sound ──────────────────────────────────────────
+    window.enableSound = () => {
+      const a = document.getElementById('alarmAudio');
+      a.play().then(() => {
+        a.pause(); a.currentTime = 0; soundEnabled = true;
+        document.getElementById('enableSoundBtn').style.display = 'none';
+        toast('🔊 Alarm sound enabled!');
+      }).catch(() => toast('⚠️ Tap again to enable sound'));
+    };
+
+    // ─── API Calls ──────────────────────────────────────
+    async function fetchTasks() {
+      try {
+        const res = await fetch(`${API}/tasks?userId=${user.id}`);
+        tasks = await res.json();
+        renderAll();
+      } catch(e) {
+        toast('⚠️ Cannot reach server');
+      }
+    }
+
+    async function saveTask(t) {
+      await fetch(`${API}/tasks`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ ...t, userId: user.id })
+      });
+      fetchTasks();
+    }
+
+    async function deleteTask(id) {
+      await fetch(`${API}/tasks/${id}?userId=${user.id}`, { method: 'DELETE' });
+      fetchTasks();
+    }
+
+    async function clearHistory() {
+      if (!confirm('Clear all completed history?')) return;
+      await fetch(`${API}/tasks/history?userId=${user.id}`, { method: 'DELETE' });
+      fetchTasks();
+      toast('🗑 History cleared');
+    }
+    window.clearHistory = clearHistory;
+
+    // ─── Render ─────────────────────────────────────────
+    function renderAll() { renderTasks(); renderHistory(); }
+
+    function renderTasks() {
+      const list = document.getElementById('taskList');
+      const active = tasks.filter(t => !t.completedAt)
+        .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+      document.getElementById('taskCountLabel').textContent = `${active.length} upcoming`;
+
+      if (active.length === 0) {
+        list.innerHTML = `<div class="empty-state"><div class="icon">${GENRES[user.genre]?.icon || '📅'}</div><p>No upcoming reminders.<br>Add one above!</p></div>`;
+        return;
+      }
+      list.innerHTML = '';
+      active.forEach(t => {
+        const el = document.createElement('div');
+        el.className = 'task-card';
+        el.innerHTML = `
+          <div class="task-info">
+            <div class="task-title">${escHtml(t.title)}</div>
+            <div class="task-desc">${escHtml(t.desc || '')}</div>
+            <div class="task-meta">
+              <span class="task-time">📅 ${t.date} • ${t.time}</span>
+              ${t.category ? `<span class="task-category">${escHtml(t.category)}</span>` : ''}
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="btn btn-ghost btn-sm" data-id="${t.id}" onclick="startEdit('${t.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">🗑</button>
+          </div>`;
+        list.appendChild(el);
+      });
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('histList');
+      const q = (document.getElementById('histSearch')?.value || '').toLowerCase();
+      const dFilter = document.getElementById('histDate')?.value;
+      let history = tasks.filter(t => t.completedAt);
+      if (q) history = history.filter(t => t.title?.toLowerCase().includes(q));
+      if (dFilter) history = history.filter(t => t.date === dFilter);
+      history.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+
+      if (history.length === 0) {
+        list.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No completed reminders yet.</p></div>`;
+        return;
+      }
+      list.innerHTML = '';
+      history.forEach(t => {
+        const el = document.createElement('div');
+        el.className = 'task-card completed';
+        el.innerHTML = `
+          <div class="task-info">
+            <div class="task-title">✅ ${escHtml(t.title)}</div>
+            <div class="task-desc">${escHtml(t.desc || '')}</div>
+            <div class="task-meta">
+              <span class="task-category">${escHtml(t.category || '')} • ${t.date}</span>
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">🗑</button>
+          </div>`;
+        list.appendChild(el);
+      });
+    }
+
+    // ─── Tab Switch ─────────────────────────────────────
+    window.switchTab = (tab) => {
+      document.getElementById('todaySection').style.display = tab === 'today' ? 'block' : 'none';
+      document.getElementById('historySection').style.display = tab === 'history' ? 'block' : 'none';
+      document.getElementById('todayTab').classList.toggle('active', tab === 'today');
+      document.getElementById('historyTab').classList.toggle('active', tab === 'history');
+      if (tab === 'history') renderHistory();
+    };
+
+    // ─── Submit Task ────────────────────────────────────
+    window.submitTask = () => {
+      const title = document.getElementById('taskTitle').value.trim();
+      const desc  = document.getElementById('taskDesc').value.trim();
+      const date  = document.getElementById('taskDate').value;
+      const timeV = document.getElementById('taskTime').value;
+      const cat   = document.getElementById('taskCategory').value;
+      if (!title || !date || !timeV) { toast('⚠️ Please fill Title, Date and Time'); return; }
+
+      let [h, m] = timeV.split(':').map(Number);
+      if (ampm === 'PM' && h < 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      const time24 = `${pad2(h)}:${pad2(m)}`;
+
+      if (editingId) {
+        const existing = tasks.find(x => x.id === editingId);
+        const updated = { ...(existing || {}), title, desc, category: cat, date, time: time24, triggered: false, completedAt: null };
+        saveTask(updated);
+        cancelEdit();
+      } else {
+        const newTask = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, desc, category: cat, date, time: time24, triggered: false, completedAt: null };
+        saveTask(newTask);
+      }
+      clearForm();
+      toast('✅ Reminder saved!');
+    };
+
+    window.startEdit = (id) => {
+      const t = tasks.find(x => x.id === id);
+      if (!t) return;
+      editingId = id;
+      document.getElementById('taskTitle').value = t.title;
+      document.getElementById('taskDesc').value = t.desc || '';
+      document.getElementById('taskDate').value = t.date;
+      document.getElementById('taskTime').value = t.time;
+      document.getElementById('taskCategory').value = t.category || '';
+      ampm = t.time >= '12:00' ? 'PM' : 'AM';
+      document.getElementById('ampmBtn').textContent = ampm;
+      document.getElementById('addUpdateBtn').textContent = '✓ Update Reminder';
+      document.getElementById('cancelEditBtn').style.display = 'block';
+      document.getElementById('taskTitle').focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.cancelEdit = () => {
+      editingId = null;
+      clearForm();
+      document.getElementById('addUpdateBtn').textContent = '＋ Add Reminder';
+      document.getElementById('cancelEditBtn').style.display = 'none';
+    };
+
+    function clearForm() {
+      ['taskTitle','taskDesc','taskDate','taskTime'].forEach(id => { document.getElementById(id).value = ''; });
+      ampm = 'AM'; document.getElementById('ampmBtn').textContent = 'AM';
+    }
+
+    // ─── Alarm Check (100ms Web Worker) ─────────────────
+    function checkAlarms() {
+      if (!tasks || !user) return;
+      const nowMs = Date.now();
+      tasks.forEach(t => {
+        if (!t.triggered && !t.completedAt) {
+          const alarmMs = new Date(`${t.date}T${t.time}`).getTime();
+          if (nowMs >= alarmMs && (nowMs - alarmMs) < 86400000) {
+            t.triggered = true;
+            saveTask(t);
+            fireAlarm(t);
+          }
+        }
+      });
+    }
+
+    function fireAlarm(t) {
+      ringingTaskId = t.id;
+      document.getElementById('alarmBanner').textContent = `⏰ ${t.title}`;
+      document.getElementById('alarmBanner').style.display = 'block';
+      document.getElementById('stopAlarmBtn').style.display = 'block';
+      if (soundEnabled) { document.getElementById('alarmAudio').currentTime = 0; document.getElementById('alarmAudio').play().catch(()=>{}); }
+      if (notifEnabled && 'Notification' in window && Notification.permission === 'granted') {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification('⏰ Alarm!', { body: `${t.title} — ${t.category || ''}`, icon: './2.png', requireInteraction: true, vibrate: [200,100,200] });
+          });
+        }
+      }
+    }
+
+    window.stopAlarm = () => {
+      document.getElementById('alarmAudio').pause();
+      document.getElementById('alarmAudio').currentTime = 0;
+      document.getElementById('alarmBanner').style.display = 'none';
+      document.getElementById('stopAlarmBtn').style.display = 'none';
+      if (ringingTaskId) {
+        const t = tasks.find(x => x.id === ringingTaskId);
+        if (t) { t.completedAt = new Date().toLocaleString(); t.triggered = true; saveTask(t); }
+        ringingTaskId = null;
+      }
+    };
+
+    // Set up Web Worker for alarm checking
+    const workerCode = `let iv; self.onmessage=e=>{if(e.data==='start')iv=setInterval(()=>self.postMessage('tick'),100);else clearInterval(iv);};`;
+    const w = new Worker(URL.createObjectURL(new Blob([workerCode], {type:'application/javascript'})));
+    w.onmessage = e => { if (e.data === 'tick') checkAlarms(); };
+    w.postMessage('start');
+
+    // ─── Service Worker ──────────────────────────────────
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+      navigator.serviceWorker.addEventListener('message', e => { if (e.data?.action === 'stopAlarm') window.stopAlarm(); });
+    }
+
+    // ─── Helper ─────────────────────────────────────────
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    window.deleteTask = deleteTask;
+
+    // ─── Restore Session ────────────────────────────────
+    const saved = sessionStorage.getItem('alarmProUser');
+    if (saved) {
+      try { user = JSON.parse(saved); loginSuccess(user); } catch(e) { sessionStorage.removeItem('alarmProUser'); }
+    }
+
+    // Keyboard: Enter submits
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && document.getElementById('authScreen').classList.contains('active')) {
+        const loginActive = document.getElementById('loginForm').classList.contains('active');
+        if (loginActive) doLogin(); else doRegister();
+      }
+    });
+
+  })();
+  </script>
+</body>
+</html>
