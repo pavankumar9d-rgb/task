@@ -191,12 +191,40 @@
     
     .hist-search { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; }
 
-    @media (max-width: 600px) {
+    /* ═══════════════ ENHANCED RESPONSIVENESS ═══════════════ */
+    @media (max-width: 768px) {
+      body { padding: 15px; }
+      .logo { font-size: 1.6rem; }
+      .top-bar { margin-bottom: 15px; flex-wrap: wrap; gap: 10px; justify-content: center; text-align: center; }
+      .top-bar-right { width: 100%; justify-content: center; }
+      
+      .nav-tabs { gap: 6px; }
+      .nav-tab { padding: 8px 12px; font-size: 0.9rem; }
+      
+      .card { padding: 15px; }
+      h2 { font-size: 1.3rem; }
+      
+      .form-row { flex-direction: column; gap: 12px; }
+      .time-group { flex-direction: column; width: 100%; align-items: stretch; gap: 8px; }
+      .time-group .field { flex: none; }
+      .ampm-toggle { height: 44px; width: 100%; border-radius: 8px; }
+      
+      .task-card { flex-direction: column; align-items: stretch; position: relative; padding-bottom: 50px; }
+      .task-actions { position: absolute; bottom: 10px; right: 10px; }
+      .task-time { font-size: 0.8rem; }
+      
+      .modal { width: 95%; padding: 15px; }
+      .modal-title { font-size: 1.2rem; }
+    }
+
+    @media (max-width: 480px) {
       .genre-grid { grid-template-columns: 1fr; }
-      .form-row { flex-direction: column; gap: 0; }
-      .task-card { flex-direction: column; align-items: flex-start; }
-      .task-actions { width: 100%; display: flex; justify-content: flex-end; margin-top: 10px; }
-      .hist-search { flex-direction: column; gap: 0; }
+      .logo { font-size: 1.4rem; width: 100%; text-align: center; margin-bottom: 10px; }
+      .top-bar-right { flex-direction: column; width: 100%; }
+      .badge-premium, .icon-btn, .user-avatar { width: 100%; text-align: center; }
+      .nav-tab { font-size: 0.8rem; padding: 10px 8px; }
+      
+      #stopAlarmBtn { width: 90%; font-size: 1rem; bottom: 10px; }
     }
   </style>
 </head>

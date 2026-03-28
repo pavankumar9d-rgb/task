@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 require('dotenv').config();
 
-const dbPath = process.env.DB_PATH || path.join(__dirname, '../../database.sqlite');
+const dbPath = process.env.DB_PATH || path.join(__dirname, '../database/database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) { console.error('DB Error:', err.message); return; }
   console.log('Connected to SQLite:', dbPath);
