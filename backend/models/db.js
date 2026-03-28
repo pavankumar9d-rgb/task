@@ -17,6 +17,7 @@ db.serialize(() => {
     id TEXT PRIMARY KEY,
     username TEXT UNIQUE,
     password TEXT,
+    email TEXT UNIQUE,
     genre TEXT,
     is_premium INTEGER DEFAULT 0
   )`);
@@ -24,7 +25,14 @@ db.serialize(() => {
   // Migration: is_premium
   db.run('ALTER TABLE users ADD COLUMN is_premium INTEGER DEFAULT 0', (err) => {
     if (err && !err.message.includes('duplicate column name')) {
-      console.error('Migration Note (users):', err.message);
+      console.error('Migration Note (users:is_premium):', err.message);
+    }
+  });
+
+  // Migration: email
+  db.run('ALTER TABLE users ADD COLUMN email TEXT', (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Migration Note (users:email):', err.message);
     }
   });
 
@@ -50,7 +58,7 @@ db.serialize(() => {
   });
 
   // 3. Demo User (Must be safe at end of serialize)
-  const demoId = 'demo123';
+  const demoId = 999123;
   db.get('SELECT id FROM users WHERE id = ?', [demoId], (err, row) => {
     if (!row && !err) {
       db.run('INSERT INTO users (id, username, password, genre, is_premium) VALUES (?, ?, ?, ?, ?)', 

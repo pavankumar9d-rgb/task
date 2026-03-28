@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alarmpro-saas-v2';
+const CACHE_NAME = 'alarmpro-saas-v3';
 const urlsToCache = [
   './',
   './index.html',
@@ -9,7 +9,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Force the new service worker to activate immediately
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))

@@ -226,6 +226,13 @@
       <div id="registerForm" class="auth-form">
         <div id="registerError" class="error-msg"></div>
         <div class="field"><label>Username</label><input id="regUser" type="text" placeholder="Choose a username" autocomplete="username"></div>
+        <div class="field">
+          <label>Email Address</label>
+          <input id="regEmail" type="email" placeholder="email@example.com" autocomplete="email" onblur="checkEmailExists(this.value)">
+          <div id="emailSuggestion" style="font-size:0.75rem; color:var(--accent); margin-top:4px; display:none;">
+            ✨ Account found! <a href="#" onclick="switchAuthTab('login'); return false;" style="color:#fff; text-decoration:underline;">Login instead?</a>
+          </div>
+        </div>
         <div class="field"><label>Password</label><input id="regPass" type="password" placeholder="Choose a password" autocomplete="new-password"></div>
         <div class="field">
           <label>Your App Type</label>
@@ -468,21 +475,31 @@
 
     window.doRegister = async () => {
       const username = document.getElementById('regUser').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
       const password = document.getElementById('regPass').value;
       const genre = document.getElementById('regGenre').value;
       const errEl = document.getElementById('registerError');
       errEl.style.display = 'none';
-      if (!username || !password) { showErr(errEl, 'Please fill all fields'); return; }
+      if (!username || !password || !email) { showErr(errEl, 'Please fill all fields'); return; }
       if (password.length < 4) { showErr(errEl, 'Password must be at least 4 characters'); return; }
       try {
         const res = await fetch(`${API}/auth/register`, {
           method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ username, password, genre })
+          body: JSON.stringify({ username, password, email, genre })
         });
         const data = await res.json();
         if (!res.ok) { showErr(errEl, data.error); return; }
         loginSuccess(data);
       } catch(e) { showErr(errEl, 'Cannot connect to server. Is it running?'); }
+    };
+
+    window.checkEmailExists = async (email) => {
+      if (!email || !email.includes('@')) return;
+      try {
+        const res = await fetch(`${API}/auth/check-email?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        document.getElementById('emailSuggestion').style.display = data.exists ? 'block' : 'none';
+      } catch(e) {}
     };
 
     function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
@@ -827,10 +844,19 @@
       ampm = 'AM'; document.getElementById('ampmBtn').textContent = 'AM';
     }
 
+    // ─── DEBUG: TIME WARP (For 10m+ Testing) ───────────
+    let timeOffset = 0;
+    window.warpTime = (mins) => {
+      timeOffset += mins * 60 * 1000;
+      toast(`⏩ Warped ${mins}m forward!`);
+      const mockTime = new Date(Date.now() + timeOffset).toLocaleTimeString();
+      console.log('--- Mock Time Now:', mockTime);
+    };
+
     // ─── Alarm Check (100ms Web Worker) ─────────────────
     function checkAlarms() {
       if (!Array.isArray(tasks) || !user) return;
-      const nowMs = Date.now();
+      const nowMs = Date.now() + timeOffset; // Support time warping for tests
       tasks.forEach(t => {
         if (!t.triggered && !t.completedAt) {
           const alarmMs = new Date(`${t.date}T${t.time}`).getTime();
@@ -878,7 +904,24 @@
 
     // ─── Service Worker ──────────────────────────────────
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        // Automatic update logic: if a new worker takes control, reload the page
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+               // The new service worker has taken over, reload the page to get the upgraded version
+               window.location.reload();
+            }
+          });
+        });
+      }).catch(()=>{});
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        // Alternative way to catch the takeover and reload
+        window.location.reload();
+      });
+
       navigator.serviceWorker.addEventListener('message', e => { if (e.data?.action === 'stopAlarm') window.stopAlarm(); });
     }
 

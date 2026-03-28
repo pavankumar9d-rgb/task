@@ -4,21 +4,29 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 exports.register = async (req, res) => {
-  const { username, password, genre } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  const { username, password, email, genre } = req.body;
+  if (!username || !password || !email) return res.status(400).json({ error: 'Username, password and email required' });
   if (password.length < 4) return res.status(400).json({ error: 'Password too short' });
+  
+  // Basic email regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) return res.status(400).json({ error: 'Invalid email format' });
 
   try {
     const hashedPass = await bcrypt.hash(password, 10);
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     
     db.run(
-      'INSERT INTO users (id, username, password, genre, is_premium) VALUES (?, ?, ?, ?, ?)',
-      [id, username, hashedPass, genre || 'student', 0],
+      'INSERT INTO users (id, username, password, email, genre, is_premium) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, username, hashedPass, email, genre || 'student', 0],
       function(err) {
-        if (err) return res.status(400).json({ error: 'Username already exists' });
+        if (err) {
+          if (err.message.includes('users.username')) return res.status(400).json({ error: 'Username already exists' });
+          if (err.message.includes('users.email')) return res.status(400).json({ error: 'Email already exists' });
+          return res.status(400).json({ error: 'Registration failed' });
+        }
         const token = jwt.sign({ id, username, is_premium: 0 }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
-        res.json({ id, username, genre: genre || 'student', is_premium: 0, token });
+        res.json({ id, username, email, genre: genre || 'student', is_premium: 0, token });
       }
     );
   } catch (err) {
@@ -31,8 +39,8 @@ exports.login = (req, res) => {
   
   // Demo Mode override
   if (username === 'demo@alarmpro.com' && password === '123456') {
-    const token = jwt.sign({ id: 'demo123', username, is_premium: 1 }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
-    return res.json({ id: 'demo123', username, genre: 'student', is_premium: 1, token, isDemo: true });
+    const token = jwt.sign({ id: 999123, username, is_premium: 1 }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
+    return res.json({ id: 999123, username, genre: 'student', is_premium: 1, token, isDemo: true });
   }
 
   db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
